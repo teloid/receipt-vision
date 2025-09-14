@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Ollama Interactive Chat</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            background-color: #121212;
+            color: #e0e0e0;
+        }
+        .container {
+            display: flex;
+            height: 100vh;
+        }
+        .left-panel {
+            width: 30%;
+            background-color: #1e1e1e;
+            padding: 20px;
+            box-sizing: border-box;
+            border-right: 1px solid #333;
+        }
+        .right-panel {
+            flex: 1;
+            padding: 20px;
+            box-sizing: border-box;
+            overflow-y: auto;
+        }
+        textarea, input[type="number"] {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            background-color: #121212;
+            color: #e0e0e0;
+            border: 1px solid #333;
+            border-radius: 5px;
+            box-sizing: border-box;
+        }
+        input[type="submit"] {
+            background-color: #6200ee;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        input[type="submit"]:hover {
+            background-color: #3700b3;
+        }
+        .response-box {
+            border: 1px solid #333;
+            background-color: #1e1e1e;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 10px;
+            white-space: pre-wrap;
+        }
+        h2, h3 {
+            color: #bb86fc;
+        }
+        label {
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="left-panel">
+            <h2>System Prompt (model: {{ ollama_model }})</h2>
+            <form method="POST">
+                <textarea name="system_prompt" rows="50">{{ system_prompt }}</textarea>
+        </div>
+        <div class="right-panel">
+            <h2>Chat</h2>
+                <label>Temperature (0.0 - 2.0):</label><br>
+                <input type="number" step="0.1" min="0" max="2.0" name="temperature" value="{{ temperature }}"><br>
+
+                <label>Your Message:</label><br>
+                <textarea name="user_message" rows="5">{{ last_user_message }}</textarea><br>
+
+                <input type="submit" value="Send">
+            </form>
+
+            {% if response %}
+                <h3>Ollama Response:</h3>
+                <div class="response-box">{{ response }}</div>
+            {% endif %}
+        </div>
+    </div>
+</body>
+</html>
