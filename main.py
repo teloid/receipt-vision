@@ -16,7 +16,7 @@ from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 from dataclasses import dataclass
 from typing import List
-
+import ask_llm
 
 @dataclass
 class ReceiptItem:
@@ -30,7 +30,6 @@ class Receipt:
     total_price: float
     items: List[ReceiptItem]
     store_inn: Optional[int] = None
-
 
 # Conditional imports for QR decoding
 USE_PYZBAR = False
@@ -164,7 +163,7 @@ def format_receipt_response(resp: dict) -> tuple[int, str]:
         item_price = round(item['price'] / 100, 2)
 
         h.update(f"{item_name}:{item_price}:{curr_time}".encode())
-        item_id = h.hexdigest()
+        item_id = f"id_{h.hexdigest()}"
 
         recps_items.append(ReceiptItem(name=item_name, price=item_price, id=item_id))
     
@@ -211,23 +210,10 @@ def process_receipt(image: io.BytesIO) -> tuple[int, str]:
         return 0, f"Error processing receipt: {e}"
 
 
-def ask_ollama(user_message: str, system_prompt: str = SYSTEM_PROMPT, temperature: float = 0.0) -> str:
-    """Send a chat request to the Ollama API and return the model's response."""
-    try:
-        import ollama
-        result = ollama.chat(
-            model=OLLAMA_MODEL,
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_message},
-            ],
-            options={"temperature": temperature},
-            think=False,
-            stream=False,
-        )
-        return result["message"]["content"].strip()
-    except Exception as e:
-        return f"⚠️ Error talking to Ollama: {e}"
+def ask_ai(user_message: str, system_prompt: str = SYSTEM_PROMPT, temperature: float = 0.0) -> str:
+    """Send a chat request to the Ollama / OpenAI API and return the model's response."""
+    return ask_llm.ask_ollama(user_message, system_prompt, temperature)
+
 
 @app.route("/", methods=["GET", "POST"])
 def index():
