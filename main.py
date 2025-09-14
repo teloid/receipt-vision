@@ -4,6 +4,8 @@ import os
 import json
 import sys
 import threading
+import hashlib
+from datetime import datetime
 from typing import List, Optional
 from pathlib import Path
 import telebot
@@ -12,6 +14,23 @@ from flask import Flask, request, render_template
 from PIL import Image
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
+from dataclasses import dataclass
+from typing import List
+
+
+@dataclass
+class ReceiptItem:
+    name: str
+    price: float
+    id: str
+
+@dataclass
+class Receipt:
+    date: str
+    total_price: float
+    items: List[ReceiptItem]
+    store_inn: Optional[int] = None
+
 
 # Conditional imports for QR decoding
 USE_PYZBAR = False
@@ -50,7 +69,7 @@ session.mount("http://", HTTPAdapter(max_retries=retries))
 
 # Load system prompt
 try:
-    with Path('system_prompt.txt').open('r') as f:
+    with Path('system_prompt.txt').open('r', encoding="utf-8") as f:
         SYSTEM_PROMPT = f.read()
 except FileNotFoundError:
     print("Error: system_prompt.txt not found.")
@@ -131,7 +150,29 @@ def format_receipt_response(resp: dict) -> tuple[int, str]:
     j = data.get("json") or data.get("data") or {}
     if not isinstance(j, dict):
         return 0, json.dumps(resp, ensure_ascii=False, indent=2)
+    
+    recps_items = []
 
+    inn = j.get('userInn')
+    expense_date = j.get('dateTime')
+    total_sum = round(j.get('totalSum') / 100, 2)
+
+    for item in j.get("items", []):
+        h = hashlib.blake2b(digest_size=8)
+        curr_time = datetime.now()
+        item_name = item['name']
+        item_price = round(item['price'] / 100, 2)
+
+        h.update(f"{item_name}:{item_price}:{curr_time}".encode())
+        item_id = h.hexdigest()
+
+        recps_items.append(ReceiptItem(name=item_name, price=item_price, id=item_id))
+    
+    receipt = Receipt(date=expense_date, store_inn=inn, total_price=total_sum, items=recps_items)
+    print(receipt)
+    return(receipt)
+
+"""
     text_response = []
     text_response.append(f"Organization: ИНН {j.get('userInn')} {j.get('user') or j.get('org') or ''}")
     text_response.append(f"Address: {j.get('metadata', {}).get('address')}")
@@ -147,7 +188,7 @@ def format_receipt_response(resp: dict) -> tuple[int, str]:
             text_response.append(f"{name} — {price:.2f}")
     print("\n".join(text_response))
     return 1, "\n".join(text_response[6:])
-
+"""
 
 def process_receipt(image: io.BytesIO) -> tuple[int, str]:
     """Process a receipt image and return the formatted response."""
