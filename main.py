@@ -50,7 +50,7 @@ session.mount("http://", HTTPAdapter(max_retries=retries))
 
 # Load system prompt
 try:
-    with Path('system_prompt.txt').open('r') as f:
+    with Path('system_prompt.txt').open('r', encoding="utf-8") as f:
         SYSTEM_PROMPT = f.read()
 except FileNotFoundError:
     print("Error: system_prompt.txt not found.")
