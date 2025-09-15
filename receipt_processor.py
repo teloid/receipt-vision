@@ -145,11 +145,10 @@ def format_receipt_response(resp: dict) -> str:
         curr_time = datetime.now()
         item_name = item['name']
         item_price = round(item['price'] / 100, 2)
-
         h.update(f"{item_name}:{item_price}:{curr_time}".encode())
         item_id = f"id_{h.hexdigest()}"
-
-        recps_items.append(ReceiptItem(name=item_name, price=item_price, id=item_id))
+        for _ in range(int(item['quantity'])):
+            recps_items.append(ReceiptItem(name=item_name, price=item_price, id=item_id))
 
     receipt = Receipt(date=expense_date, store_inn=inn, total_price=total_sum, items=recps_items)
     print(receipt)
