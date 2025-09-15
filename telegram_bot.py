@@ -1,6 +1,6 @@
 from telegram import Update
 import os
-from telegram.ext import Application, CommandHandler, MessageHandler, filters
+from telegram.ext import Application, MessageHandler, filters
 from config import load_config
 from receipt_processor import process_receipt
 from llm_handler import categorize_receipt
@@ -14,7 +14,7 @@ async def handle_photo(update: Update, context):
     try:
         receipt_data = process_receipt(photo_path)
         categorized = categorize_receipt(receipt_data)
-        await update.message.reply_text(f"Categorized: {categorized}")
+        await update.message.reply_text(f"{categorized}")
     except Exception as e:
         await update.message.reply_text(f"Error: {str(e)}")
     finally:

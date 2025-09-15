@@ -1,16 +1,19 @@
 import ollama
 from openai import OpenAI
 from config import load_config
-from prompts_manager import load_prompt
+from pathlib import Path
 
-
-def categorize_receipt(data, ):
+def categorize_receipt(data):
     config = load_config()
     provider = config['llm_provider']
     temperature = config['temperature']
-    system_prompt = load_prompt(config['default_prompt'])
+    try:
+        with Path(config['default_prompt']).open('r', encoding="utf-8") as f:
+            system_prompt = f.read()
+    except FileNotFoundError:
+        print("Error: system prompt not found.")
 
-    user_prompt = f"Categorize this receipt data: {data}"  # Customize as needed
+    user_prompt = f"{data}"  # Customize as needed
 
     if provider == 'ollama':
         response = ollama.chat(

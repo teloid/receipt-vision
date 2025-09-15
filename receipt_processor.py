@@ -1,4 +1,3 @@
-import os
 import io
 from PIL import Image
 import sys
@@ -11,6 +10,9 @@ import requests
 from requests.adapters import HTTPAdapter
 import json
 from config import load_config
+from pyzbar.pyzbar import decode as zbar_decode
+import cv2
+import numpy as np
 
 config = load_config()
 
@@ -34,16 +36,11 @@ USE_PYZBAR = False
 USE_OPENCV = False
 
 try:
-    from pyzbar.pyzbar import decode as zbar_decode
-
     USE_PYZBAR = True
 except Exception as e:
     print(f"pyzbar unavailable or can't find zbar native lib: {e}")
     print("Falling back to OpenCV if available...")
     try:
-        import cv2
-        import numpy as np
-
         USE_OPENCV = True
     except Exception as e:
         print(f"OpenCV unavailable: {e}")
@@ -62,7 +59,7 @@ session.mount("https://", HTTPAdapter(max_retries=retries))
 session.mount("http://", HTTPAdapter(max_retries=retries))
 
 
-def decode_qr_from_image(image: io.BytesIO) -> List[str]:
+def decode_qr_from_image(image) -> List[str]:
     """Decode QR codes from an image, returning a list of decoded strings."""
     try:
         img = Image.open(image).convert("RGB")
@@ -158,7 +155,7 @@ def format_receipt_response(resp: dict) -> str:
     print(receipt)
     return str(receipt)
 
-def process_receipt(image: io.BytesIO) -> str:
+def process_receipt(image) -> str:
     """Process a receipt image and return the formatted response."""
     token = config.get('proverkacheka_api_key')
     if not token:
