@@ -1,10 +1,10 @@
 # --- LLM helpers -------------------------------------------------------------
-# pip install openai
 import os
 from pathlib import Path
 from functools import lru_cache
 from typing import Optional
-
+import ollama
+from openai import OpenAI
 # Если хочешь хранить несколько system prompt'ов в файлах ./prompts/<name>.txt
 PROMPTS_DIR = Path("prompts")
 
@@ -26,19 +26,16 @@ def pick_text_or_file(system_prompt: str) -> str:
     return system_prompt
 
 
-# можно переопределять через переменные окружения
-OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4o-mini")   # дешёвый и быстрый
-# OLLAMA_MODEL уже есть у тебя в коде
+OPENAI_MODEL = "gpt-4o-mini"
+OLLAMA_MODEL = "gpt-oss"
 
 # --- OLLAMA ------------------------------------------------------------------
 def ask_ollama(user_message: str,
                system_prompt: str,
-               temperature: float = 0.0,
-               model: Optional[str] = None) -> str:
+               temperature: float = 0.0) -> str:
     """Запрос к локальному Ollama."""
     try:
-        import ollama
-        used_model = model or OLLAMA_MODEL
+        used_model = OLLAMA_MODEL
         result = ollama.chat(
             model=used_model,
             messages=[
@@ -60,7 +57,6 @@ def _get_openai_client():
     Ленивое создание клиента OpenAI.
     Уважает OPENAI_API_KEY и (опционально) OPENAI_BASE_URL.
     """
-    from openai import OpenAI  # официальная либра OpenAI (>=1.x)
     kwargs = {}
     base_url = os.getenv("OPENAI_BASE_URL")
     if base_url:
@@ -72,12 +68,11 @@ def _get_openai_client():
 
 def ask_openai(user_message: str,
                system_prompt: str,
-               temperature: float = 0.0,
-               model: Optional[str] = None) -> str:
+               temperature: float = 0.0) -> str:
     """Запрос к OpenAI Chat Completions (через офиц. SDK)."""
     try:
         client = _get_openai_client()
-        used_model = model or OPENAI_MODEL
+        used_model = OPENAI_MODEL
         resp = client.chat.completions.create(  # Chat Completions поддерживается и сейчас
             model=used_model,
             messages=[
